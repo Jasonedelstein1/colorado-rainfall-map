@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colorado Rainfall — Forage Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map"></div>
+
+<!-- SVG icon defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 2.7 6.6 9.8a6.75 6.75 0 1 0 10.8 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 1 9 9c0 2.5-1 4.7-2.6 6.3M12 3a9 9 0 0 0-9 9c0 2.5 1 4.7 2.6 6.3M12 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m12 12 4-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4m0 1h12l-2.5 4L17 13H5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m3 19 6.5-11L13 13l2.5-4L21 19Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5Zm-9 9 9 5 9-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<aside id="panel" class="panel">
+  <header class="panel-head">
+    <div class="brand">
+      <svg class="ic brand-ic"><use href="#i-droplet"/></svg>
+      <div>
+        <h1>Colorado Rainfall</h1>
+        <p class="sub">Forage planning &middot; topo + precip</p>
+      </div>
+    </div>
+    <button id="collapseBtn" class="icon-btn" aria-label="Collapse panel" title="Collapse panel">
+      <svg class="ic"><use href="#i-chev"/></svg>
+    </button>
+  </header>
+
+  <div class="panel-body">
+    <section class="block">
+      <h2 class="block-title">Data source</h2>
+      <div class="seg seg-2" role="tablist" aria-label="Data source">
+        <button class="seg-btn src-btn active" data-src="mrms" role="tab">Radar + gauge</button>
+        <button class="seg-btn src-btn" data-src="om" role="tab">Model</button>
+      </div>
+      <p id="srcHint" class="hint"></p>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Time window</h2>
+      <div class="seg" role="tablist" aria-label="Time window">
+        <button class="seg-btn" data-mode="t24" role="tab">24 hr</button>
+        <button class="seg-btn" data-mode="t72" role="tab">72 hr</button>
+        <button class="seg-btn active" data-mode="t7" role="tab">7 day</button>
+        <button class="seg-btn" data-mode="steady" role="tab">Steady</button>
+      </div>
+      <p id="modeHint" class="hint"></p>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Legend <span id="legendUnit" class="unit"></span></h2>
+      <div id="legend" class="legend"></div>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Layers</h2>
+      <label class="check"><input type="checkbox" id="lyrGrid" checked><span class="box"></span>
+        <svg class="ic sm"><use href="#i-droplet"/></svg> Rainfall grid</label>
+      <label class="check"><input type="checkbox" id="lyrSnotel" checked><span class="box"></span>
+        <svg class="ic sm"><use href="#i-gauge"/></svg> SNOTEL gauges</label>
+      <label class="check"><input type="checkbox" id="lyrTrails" checked><span class="box"></span>
+        <svg class="ic sm"><use href="#i-flag"/></svg> Trailheads <span class="hint-inline">(zoom in)</span></label>
+      <div class="row basemap-row">
+        <svg class="ic sm"><use href="#i-layers"/></svg>
+        <select id="basemap" aria-label="Basemap">
+          <option value="usgstopo" selected>USGS Topo (roads + contours)</option>
+          <option value="usgsimg">USGS Imagery + Topo</option>
+          <option value="opentopo">OpenTopoMap</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title">Elevation band <span class="unit">ft</span></h2>
+      <div class="row elev-row">
+        <svg class="ic sm"><use href="#i-mountain"/></svg>
+        <input type="number" id="elevMin" value="0" step="500" min="0" max="14500" aria-label="Minimum elevation feet">
+        <span class="dash">&ndash;</span>
+        <input type="number" id="elevMax" value="14500" step="500" min="0" max="14500" aria-label="Maximum elevation feet">
+      </div>
+      <div class="elev-presets">
+        <button class="chip" data-lo="7500" data-hi="10000">Montane 7.5&ndash;10k</button>
+        <button class="chip" data-lo="9500" data-hi="11500">Subalpine 9.5&ndash;11.5k</button>
+        <button class="chip" data-lo="0" data-hi="14500">All</button>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title"><svg class="ic sm ttl"><use href="#i-target"/></svg> Steady-rain hotspots</h2>
+      <p class="hint">Cells with rain on 4+ of the last 7 days, ranked by 7-day total. Click to fly.</p>
+      <ol id="hotspots" class="hotspots"></ol>
+    </section>
+  </div>
+
+  <footer class="panel-foot">
+    <span id="status" class="status">Loading&hellip;</span>
+    <button id="refreshBtn" class="icon-btn" aria-label="Refresh data" title="Refresh data">
+      <svg class="ic"><use href="#i-refresh"/></svg>
+    </button>
+  </footer>
+</aside>
+
+<button id="expandBtn" class="expand-btn" aria-label="Open panel" hidden>
+  <svg class="ic"><use href="#i-droplet"/></svg>
+</button>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
