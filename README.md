@@ -5,6 +5,17 @@ contours, roads, and labels; a color-graded rainfall overlay; SNOTEL gauge readi
 trailheads. Hover any cell or gauge to see 24 hr / 72 hr / 7 day totals plus elevation and a
 rain-day strip.
 
+## Where it lives
+
+- **Hosted (auto-updating):** <https://jasonedelstein1.github.io/colorado-rainfall-map/> —
+  a GitHub Action re-fetches the MRMS radar data every 6 hours, so this stays current with
+  no machine running at home. Works on phones.
+- **Cloudflare Pages:** project `rainfall-map` exists (`rainfall-map.pages.dev`) but needs a
+  one-time `npx wrangler login`, then:
+  `npx wrangler pages deploy <folder with index.html/style.css/app.js> --project-name rainfall-map`.
+  The Cloudflare copy reads its data from this repo's raw URL, so it stays fresh without redeploys.
+- **Local:** desktop shortcut "Rainfall Map", or:
+
 ## Run it
 
 ```
